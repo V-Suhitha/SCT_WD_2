@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modern Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --theme-main: #059669;    
+            --theme-dark: #047857;    
+            --theme-light: #ecfdf5;   
+            --text-main: #064e3b;     
+            --text-muted: #05966980;  
+            
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(5, 150, 105, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0fdf4;
+            color: var(--text-main);
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .calculator {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            padding: 2rem 1.5rem;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .display {
+            padding: 1rem 0.5rem;
+            text-align: right;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+        }
+
+        .previous-operand { color: var(--text-muted); font-size: 1rem; min-height: 1.5rem; }
+        .current-operand { color: var(--text-main); font-size: 3.2rem; font-weight: 600; line-height: 1.1; letter-spacing: -1px; }
+
+        .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; place-items: center; }
+
+        .btn {
+            background: white;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.05);
+            user-select: none;
+        }
+
+        .btn[data-number] { background: transparent; box-shadow: none; }
+        .btn:active { transform: scale(0.92); }
+
+        .btn-operator { color: var(--theme-main); background: var(--theme-light); }
+        .btn-action { color: #064e3b99; background: var(--theme-light); font-size: 1.1rem; }
+        
+        .btn-equals { background: var(--theme-main); color: white; grid-column: span 2; width: 100%; border-radius: 32px; box-shadow: 0 8px 16px rgba(5, 150, 105, 0.2); }
+        .btn-equals:hover { background: var(--theme-dark); }
+
+        .history-panel {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 75%;
+            background: white; border-radius: 40px 40px 0 0; z-index: 30;
+            padding: 1.5rem; transform: translateY(105%); transition: transform 0.35s ease;
+            display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 -10px 25px rgba(5, 150, 105, 0.1);
+        }
+        .history-panel.open { transform: translateY(0); }
+        .history-list { flex-grow: 1; overflow-y: auto; }
+        .history-item { padding: 0.8rem 0; border-bottom: 1px solid #ecfdf5; cursor: pointer; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <div class="flex items-center justify-between px-2 pt-2">
+            <span class="text-[10px] font-bold tracking-[0.2em] text-emerald-400 uppercase">Calculator</span>
+            <button id="history-toggle-btn" class="p-2 rounded-full hover:bg-emerald-50 text-emerald-400"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
+        </div>
+
+        <div class="display">
+            <div class="previous-operand" id="previous-operand"></div>
+            <div class="current-operand" id="current-operand">0</div>
+        </div>
+
+        <div class="keypad">
+            <button class="btn btn-action" data-action="clear">AC</button>
+            <button class="btn btn-action" data-action="delete">⌫</button>
+            <button class="btn btn-action" data-action="percent">%</button>
+            <button class="btn btn-operator" data-operation="÷">÷</button>
+            <button class="btn" data-number="7">7</button>
+            <button class="btn" data-number="8">8</button>
+            <button class="btn" data-number="9">9</button>
+            <button class="btn btn-operator" data-operation="×">×</button>
+            <button class="btn" data-number="4">4</button>
+            <button class="btn" data-number="5">5</button>
+            <button class="btn" data-number="6">6</button>
+            <button class="btn btn-operator" data-operation="-">−</button>
+            <button class="btn" data-number="1">1</button>
+            <button class="btn" data-number="2">2</button>
+            <button class="btn" data-number="3">3</button>
+            <button class="btn btn-operator" data-operation="+">+</button>
+            <button class="btn" data-number="0">0</button>
+            <button class="btn" data-number=".">.</button>
+            <button class="btn btn-equals" data-action="calculate">=</button>
+        </div>
+
+        <div class="history-panel" id="history-panel">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-semibold text-emerald-900">History</h3>
+                <button id="history-close-btn" class="p-1 rounded-full hover:bg-emerald-50">✕</button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+            <button id="history-clear-btn" class="w-full py-3 bg-emerald-50 rounded-2xl font-semibold mt-2 text-sm text-emerald-600">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        class Calculator {
+            constructor(prevEl, currEl) { 
+                this.prevEl = prevEl; this.currEl = currEl; 
+                this.history = JSON.parse(localStorage.getItem('calc_history')) || []; 
+                this.clear(); this.updateHistoryUI(); 
+            }
+            clear() { this.curr = '0'; this.prev = ''; this.op = undefined; this.reset = false; }
+            delete() { if (this.reset) return; this.curr = this.curr.toString().slice(0, -1) || '0'; }
+            appendNumber(n) { 
+                if (n === '.' && this.curr.includes('.')) return; 
+                if (this.reset) { this.curr = n === '.' ? '0.' : n; this.reset = false; }
+                else this.curr = (this.curr === '0' && n !== '.') ? n : this.curr.toString() + n; 
+            }
+            chooseOperation(op) { 
+                if (this.curr === '' && op === '-') { this.curr = '-'; return; }
+                if (this.curr === '') return; 
+                if (this.prev !== '') this.compute(); 
+                this.op = op; this.prev = this.curr; this.curr = ''; 
+            }
+            compute() {
+                let p = parseFloat(this.prev), c = parseFloat(this.curr);
+                if (isNaN(p) || isNaN(c)) return;
+                let res;
+                switch (this.op) {
+                    case '+': res = p + c; break;
+                    case '−': res = p - c; break;
+                    case '×': res = p * c; break;
+                    case '÷': res = c === 0 ? 'Error' : p / c; break;
+                    default: return;
+                }
+                this.history.unshift({ex: `${p} ${this.op} ${c}`, res: res});
+                localStorage.setItem('calc_history', JSON.stringify(this.history.slice(0, 20)));
+                this.curr = res.toString(); this.op = undefined; this.prev = ''; this.reset = true;
+                this.updateHistoryUI();
+            }
+            updateHistoryUI() {
+                const list = document.getElementById('history-list');
+                list.innerHTML = this.history.map(i => `<div class="history-item"><div class="text-xs text-emerald-300">${i.ex}</div><div class="font-bold">${i.res}</div></div>`).join('');
+            }
+            update() { 
+                this.currEl.innerText = this.curr;
+                this.prevEl.innerText = this.op ? `${this.prev} ${this.op}` : '';
+            }
+        }
+        const calc = new Calculator(document.getElementById('previous-operand'), document.getElementById('current-operand'));
+        document.querySelectorAll('[data-number]').forEach(b => b.addEventListener('click', () => { calc.appendNumber(b.innerText); calc.update(); }));
+        document.querySelectorAll('[data-operation]').forEach(b => b.addEventListener('click', () => { calc.chooseOperation(b.innerText); calc.update(); }));
+        document.querySelector('[data-action="calculate"]').addEventListener('click', () => { calc.compute(); calc.update(); });
+        document.querySelector('[data-action="clear"]').addEventListener('click', () => { calc.clear(); calc.update(); });
+        document.querySelector('[data-action="delete"]').addEventListener('click', () => { calc.delete(); calc.update(); });
+        document.querySelector('[data-action="percent"]').addEventListener('click', () => { calc.curr = parseFloat(calc.curr) / 100; calc.update(); });
+        document.getElementById('history-toggle-btn').addEventListener('click', () => document.getElementById('history-panel').classList.add('open'));
+        document.getElementById('history-close-btn').addEventListener('click', () => document.getElementById('history-panel').classList.remove('open'));
+        document.getElementById('history-clear-btn').addEventListener('click', () => { calc.history = []; localStorage.removeItem('calc_history'); calc.updateHistoryUI(); });
+    </script>
+</body>
+</html>
